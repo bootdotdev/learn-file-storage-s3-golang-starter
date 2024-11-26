@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tubely</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="nav-bar">
+      <h1>
+        Tubely
+        <span class="subtitle">The #1 tool for engagement bait</span>
+      </h1>
+      <button onclick="logout()">Logout</button>
+    </div>
+
+    <div id="auth-section">
+      <h2>Login</h2>
+      <form id="login-form">
+        <input
+          class="input-area"
+          type="email"
+          id="email"
+          placeholder="Email"
+          required
+        />
+        <input
+          class="input-area"
+          type="password"
+          id="password"
+          placeholder="Password"
+          required
+        />
+        <div class="button-container">
+          <button type="submit">Login</button>
+          <button onclick="signup()" type="button">Signup</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="video-section" style="display: none">
+      <h2>Create Draft</h2>
+      <form id="video-draft-form">
+        <input
+          class="input-area"
+          type="text"
+          id="video-title"
+          placeholder="Video Title"
+          required
+        />
+        <textarea
+          class="input-area"
+          id="video-description"
+          placeholder="Video Description"
+          required
+        ></textarea>
+        <div class="button-container">
+          <button type="submit">Create Draft</button>
+        </div>
+      </form>
+      <h2>All Videos</h2>
+      <ul id="video-list"></ul>
+
+      <div id="video-display" style="display: none">
+        <h2>Current Video: <span id="video-title-display"></span></h2>
+        <p id="video-description-display"></p>
+
+        <div class="button-container mb-4">
+          <button onclick="deleteVideo()">Delete Video</button>
+        </div>
+
+        <div id="video-upload-forms">
+          <form
+            id="thumbnail-upload-form"
+            onsubmit="event.preventDefault(); uploadThumbnail(currentVideo?.id)"
+          >
+            <h3>Update Thumbnail</h3>
+            <input
+              type="file"
+              id="thumbnail"
+              accept="image/*,application/pdf"
+              required
+            />
+            <button type="submit" id="upload-thumbnail-btn">Upload</button>
+            <img id="thumbnail-image" style="display: block" />
+          </form>
+
+          <div id="video-container">
+            <form
+              id="video-file-upload-form"
+              onsubmit="event.preventDefault(); uploadVideoFile(currentVideo?.id)"
+            >
+              <h3>Update Video File</h3>
+              <input type="file" id="video-file" accept="video/*" required />
+              <button type="submit" id="upload-video-btn">Upload</button>
+            </form>
+            <video id="video-player" controls style="display: block"></video>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
