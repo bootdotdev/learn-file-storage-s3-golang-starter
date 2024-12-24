@@ -39,7 +39,7 @@ brew install sqlite3
 ## 2. Download sample images and videos
 
 ```bash
-./assetdownload.sh
+./samplesdownload.sh
 # samples/ dir will be created
 # with sample images and videos
 ```
