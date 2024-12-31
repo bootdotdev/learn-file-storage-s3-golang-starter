@@ -39,6 +39,9 @@ brew install sqlite3
 ## 2. Download sample images and videos
 
 ```bash
+# make the script executable
+chmod +x ./samplesdownload.sh
+# run the script
 ./samplesdownload.sh
 # samples/ dir will be created
 # with sample images and videos
