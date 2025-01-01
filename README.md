@@ -1,6 +1,6 @@
 # learn-file-storage-s3-golang-starter (Tubely)
 
-This repo contains the starter code for the Tubely application - the #1 tool for engagement bait - for the "Learn File Storage" [course](https://boot.dev/courses/learn-file-storage-golang) on [boot.dev](https://boot.dev)
+This repo contains the starter code for the Tubely application - the #1 tool for engagement bait - for the "Learn File Servers and CDNs with S3 and CloudFront" [course](https://www.boot.dev/courses/learn-file-servers-s3-cloudfront-golang) on [boot.dev](https://www.boot.dev)
 
 ## Quickstart
 
@@ -39,7 +39,7 @@ brew install sqlite3
 ## 2. Download sample images and videos
 
 ```bash
-./assetdownload.sh
+./samplesdownload.sh
 # samples/ dir will be created
 # with sample images and videos
 ```
