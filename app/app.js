@@ -42,7 +42,7 @@ async function createVideoDraft() {
     const videoID = data.id;
     if (videoID) {
       await getVideos();
-      await getVideo(videoID);
+      await videoStateHandler(videoID);
     }
   } catch (error) {
     alert(`Error: ${error.message}`);
@@ -108,12 +108,26 @@ function logout() {
   document.getElementById('video-section').style.display = 'none';
 }
 
+function setUploadButtonState(uploading, selector) {
+  const uploadBtn = document.getElementById(selector);
+  if (uploading) {
+    uploadBtn.textContent = 'Uploading...';
+    uploadBtn.disabled = true;
+    return;
+  }
+  uploadBtn.textContent = 'Upload';
+  uploadBtn.disabled = false;
+}
+
 async function uploadThumbnail(videoID) {
   const thumbnailFile = document.getElementById('thumbnail').files[0];
   if (!thumbnailFile) return;
 
   const formData = new FormData();
   formData.append('thumbnail', thumbnailFile);
+
+  uploadBtnSelector = 'upload-thumbnail-btn';
+  setUploadButtonState(true, uploadBtnSelector);
 
   try {
     const res = await fetch(`/api/thumbnail_upload/${videoID}`, {
@@ -134,6 +148,8 @@ async function uploadThumbnail(videoID) {
   } catch (error) {
     alert(`Error: ${error.message}`);
   }
+
+  setUploadButtonState(false, uploadBtnSelector);
 }
 
 async function uploadVideoFile(videoID) {
@@ -142,6 +158,9 @@ async function uploadVideoFile(videoID) {
 
   const formData = new FormData();
   formData.append('video', videoFile);
+
+  uploadBtnSelector = 'upload-video-btn';
+  setUploadButtonState(true, uploadBtnSelector);
 
   try {
     const res = await fetch(`/api/video_upload/${videoID}`, {
@@ -161,7 +180,11 @@ async function uploadVideoFile(videoID) {
   } catch (error) {
     alert(`Error: ${error.message}`);
   }
+
+  setUploadButtonState(false, uploadBtnSelector);
 }
+
+const videoStateHandler = createVideoStateHandler();
 
 async function getVideos() {
   try {
@@ -182,12 +205,28 @@ async function getVideos() {
     for (const video of videos) {
       const listItem = document.createElement('li');
       listItem.textContent = video.title;
-      listItem.onclick = () => getVideo(video.id);
+      listItem.onclick = () => videoStateHandler(video.id);
       videoList.appendChild(listItem);
     }
   } catch (error) {
     alert(`Error: ${error.message}`);
   }
+}
+
+function createVideoStateHandler() {
+  let currentVideoID = null;
+
+  return async function handleVideoClick(videoID) {
+    if (currentVideoID !== videoID) {
+      currentVideoID = videoID;
+
+      // Reset file input values
+      document.getElementById('thumbnail').value = '';
+      document.getElementById('video-file').value = '';
+
+      await getVideo(videoID);
+    }
+  };
 }
 
 async function getVideo(videoID) {

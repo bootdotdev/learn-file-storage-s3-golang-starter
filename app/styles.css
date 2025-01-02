@@ -176,3 +176,8 @@ form {
 .mb-4 {
     margin-bottom: 16px;
 }
+
+button[disabled] {
+    background-color: var(--subtle-color);
+    cursor: not-allowed;
+}
