@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/database"
+	"github.com/imhasandl/learn-file-storage-s3-golang-starter/internal/database"
 	"github.com/google/uuid"
 
 	"github.com/joho/godotenv"
