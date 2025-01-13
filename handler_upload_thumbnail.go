@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path/filepath"
 
 	"github.com/google/uuid"
 	"github.com/imhasandl/learn-file-storage-s3-golang-starter/internal/auth"
@@ -63,10 +64,8 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	
-	base64Encoded := base64.StdEncoding.EncodeToString(data)
-	base64DataURL := fmt.Sprintf("data:%s;base64,%s", mediaType, base64Encoded)
+	DataURL := filepath.Join("assets", "%d", "%s", , )
 
-	video.ThumbnailURL = &base64DataURL	
 
 	if video.UserID != userID {
 		respondWithError(w, http.StatusUnauthorized, "Not authorized to update this video", nil)
