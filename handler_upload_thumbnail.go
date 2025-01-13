@@ -63,22 +63,15 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	
-	base := base64.StdEncoding.EncodeToString(data)
-	if mediaType == "" {
-		respondWithError(w, http.StatusBadRequest, "can't encode to string", nil)
-		return
-	}
+	base64Encoded := base64.StdEncoding.EncodeToString(data)
+	base64DataURL := fmt.Sprintf("data:%s;base64,%s", mediaType, base64Encoded)
 
-	url := fmt.Sprintf("data:%s;base64,%s", mediaType, base)
-	
+	video.ThumbnailURL = &base64DataURL	
 
 	if video.UserID != userID {
 		respondWithError(w, http.StatusUnauthorized, "Not authorized to update this video", nil)
 		return
 	}
-
-	url := fmt.Sprintf("http://localhost:%s/api/thumbnails/%s", cfg.port, videoID)
-	video.ThumbnailURL = &url
 
 	err = cfg.db.UpdateVideo(video)
 	if err != nil {
