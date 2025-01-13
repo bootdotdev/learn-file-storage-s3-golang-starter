@@ -2,11 +2,12 @@ package main
 
 import (
 	"io"
+	"mime"
 	"net/http"
 	"os"
 
-	"github.com/imhasandl/learn-file-storage-s3-golang-starter/internal/auth"
 	"github.com/google/uuid"
+	"github.com/imhasandl/learn-file-storage-s3-golang-starter/internal/auth"
 )
 
 func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Request) {
@@ -39,9 +40,13 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 	}
 	defer file.Close()
 
-	mediaType := header.Header.Get("Content-Type")
-	if mediaType == "" {
-		respondWithError(w, http.StatusBadRequest, "Missing Content-Type for thumbnail", nil)
+	mediaType, _, err := mime.ParseMediaType(header.Header.Get("Content-Type"))
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid content-type", err)
+		return
+	}
+	if mediaType != "image/jpeg" && mediaType != "images/png" {
+		respondWithError(w, http.StatusBadRequest, "invalid file type", err)
 		return
 	}
 
