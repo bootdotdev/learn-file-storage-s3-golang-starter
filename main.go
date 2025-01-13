@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/imhasandl/learn-file-storage-s3-golang-starter/internal/database"
-	"github.com/google/uuid"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -23,13 +22,6 @@ type apiConfig struct {
 	s3CfDistribution string
 	port             string
 }
-
-type thumbnail struct {
-	data      []byte
-	mediaType string
-}
-
-var videoThumbnails = map[uuid.UUID]thumbnail{}
 
 func main() {
 	godotenv.Load(".env")
