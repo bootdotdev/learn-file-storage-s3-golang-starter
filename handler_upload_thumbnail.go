@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/google/uuid"
 	"github.com/imhasandl/learn-file-storage-s3-golang-starter/internal/auth"
+	"github.com/google/uuid"
 )
 
 func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Request) {
@@ -42,11 +42,11 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 
 	mediaType, _, err := mime.ParseMediaType(header.Header.Get("Content-Type"))
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "invalid content-type", err)
+		respondWithError(w, http.StatusBadRequest, "Invalid Content-Type", err)
 		return
 	}
-	if mediaType != "image/jpeg" && mediaType != "images/png" {
-		respondWithError(w, http.StatusBadRequest, "invalid file type", err)
+	if mediaType != "image/jpeg" && mediaType != "image/png" {
+		respondWithError(w, http.StatusBadRequest, "Invalid file type", nil)
 		return
 	}
 

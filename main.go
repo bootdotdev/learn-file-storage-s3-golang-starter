@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/imhasandl/learn-file-storage-s3-golang-starter/internal/database"
-
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
