@@ -50,8 +50,9 @@ async function createVideoDraft() {
 }
 
 async function login() {
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
+  const authData = validateAuthForm();
+  if (!authData) return;
+  const { email, password } = authData;
 
   try {
     const res = await fetch('/api/login', {
@@ -80,8 +81,9 @@ async function login() {
 }
 
 async function signup() {
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
+  const authData = validateAuthForm();
+  if (!authData) return;
+  const { email, password } = authData;
 
   try {
     const res = await fetch('/api/users', {
@@ -298,4 +300,31 @@ async function deleteVideo() {
   } catch (error) {
     alert(`Error: ${error.message}`);
   }
+}
+
+function validateAuthForm() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value.trim();
+
+  if (!email) {
+    alert('Email is required.');
+    return null;
+  }
+
+  if (!email.includes('@') || !email.includes('.')) {
+    alert('Please enter a valid email address.');
+    return null;
+  }
+
+  if (!password) {
+    alert('Password is required.');
+    return null;
+  }
+
+  if (password.length < 6) {
+    alert('Password must be at least 6 characters long.');
+    return null;
+  }
+
+  return { email, password };
 }
