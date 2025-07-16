@@ -1,10 +1,11 @@
 package main
 
 import (
-	"encoding/base64"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
+	"os"
 
 	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/auth"
 	"github.com/google/uuid"
@@ -45,17 +46,38 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		respondWithError(w, http.StatusBadRequest, "Unable to parse from file", err)
 		return
 	}
-
 	defer file.Close()
+
 	mediaType := header.Header.Get("Content-Type")
 	if mediaType == "" {
 		respondWithError(w, http.StatusBadRequest, "Missing Content-Type for thumbnails", nil)
 		return
 	}
 
-	imgDat, err := io.ReadAll(file)
+	mimeType, _, err := mime.ParseMediaType(mediaType)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't get image data", err)
+		respondWithError(w, http.StatusInternalServerError, "Couldn't parse mime type", err)
+		return
+	}
+	fmt.Printf("MIME TYPE: %s", mimeType)
+	if mimeType != "image/png" && mimeType != "image/jpeg" {
+		respondWithError(w, http.StatusBadRequest, "Media must be png or jpeg", nil)
+		return
+	}
+
+	assetPath := getAssetPath(videoID, mediaType)
+	assetDiskPath := cfg.getAssetDiskPath(assetPath)
+
+	dst, err := os.Create(assetDiskPath)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't create a file", err)
+		return
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, file)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't copy from multipart", err)
 		return
 	}
 
@@ -70,8 +92,7 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	base64Data := base64.StdEncoding.EncodeToString(imgDat)
-	thumbnailUrl := fmt.Sprintf("data:%s;base64,%s", mediaType, base64Data)
+	thumbnailUrl := cfg.getAssetURL(assetPath)
 
 	videoMetadata.ThumbnailURL = &thumbnailUrl
 
