@@ -59,13 +59,13 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		respondWithError(w, http.StatusInternalServerError, "Couldn't parse mime type", err)
 		return
 	}
-	fmt.Printf("MIME TYPE: %s", mimeType)
+
 	if mimeType != "image/png" && mimeType != "image/jpeg" {
 		respondWithError(w, http.StatusBadRequest, "Media must be png or jpeg", nil)
 		return
 	}
 
-	assetPath := getAssetPath(videoID, mediaType)
+	assetPath := getAssetPath(mediaType)
 	assetDiskPath := cfg.getAssetDiskPath(assetPath)
 
 	dst, err := os.Create(assetDiskPath)
