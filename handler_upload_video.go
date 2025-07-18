@@ -1,11 +1,15 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"mime"
 	"net/http"
 	"os"
+	"os/exec"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -73,7 +77,7 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	tmpFile, err := os.CreateTemp("", "tubley-upload.mp4")
+	tmpFile, err := os.CreateTemp("", "tubely-upload.mp4")
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create file", err)
 		return
@@ -93,7 +97,23 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	fileName := getAssetPath(mimeType)
+	ratio, err := getVideoAspectRatio(tmpFile.Name())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't get aspect ratio from video", err)
+		return
+	}
+
+	var videoPrefix string
+	switch ratio {
+	case "16:9":
+		videoPrefix = "landscape/"
+	case "9:16":
+		videoPrefix = "portrait/"
+	default:
+		videoPrefix = "other/"
+	}
+
+	fileName := videoPrefix + getAssetPath(mimeType)
 
 	_, err = cfg.s3Client.PutObject(r.Context(), &s3.PutObjectInput{
 		Bucket:      aws.String(cfg.s3Bucket),
@@ -115,4 +135,89 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 
 	respondWithJSON(w, http.StatusOK, video)
 
+}
+
+type VideoStream struct {
+	Streams []struct {
+		Width              int    `json:"width,omitempty"`
+		Height             int    `json:"height,omitempty"`
+		SampleAspectRatio  string `json:"sample_aspect_ratio,omitempty"`
+		DisplayAspectRatio string `json:"display_aspect_ratio,omitempty"`
+	} `json:"streams"`
+}
+
+func getVideoAspectRatio(path string) (string, error) {
+	cmd := exec.Command("ffprobe", "-v", "error", "-print_format", "json", "-show_streams", path)
+
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("ffprobe error: %v, details: %s", err, stderr.String())
+	}
+
+	videoStream := VideoStream{}
+	if err := json.Unmarshal(out.Bytes(), &videoStream); err != nil {
+		fmt.Println("Error Unmarshal data")
+		return "", err
+	}
+
+	width := videoStream.Streams[0].Width
+	height := videoStream.Streams[0].Height
+
+	if width == 0 || height == 0 {
+		return "", fmt.Errorf("Invalid width/height")
+	}
+
+	aspectRatio := getNearestAspectRatio(width, height)
+
+	return aspectRatio, nil
+}
+
+// getNearestAspectRatio calculates the simplified ratio and finds the closest standard ratio
+func getNearestAspectRatio(width, height int) string {
+	// Step 1: Simplify using GCD
+	gcd := func(a, b int) int {
+		for b != 0 {
+			a, b = b, a%b
+		}
+		return a
+	}
+	divisor := gcd(width, height)
+	simplifiedW := width / divisor
+	simplifiedH := height / divisor
+
+	// Step 2: Common standard ratios
+	standardRatios := map[string][2]int{
+		"16:9": {16, 9},
+		"9:16": {9, 16},
+		"4:3":  {4, 3},
+		"3:4":  {3, 4},
+		"1:1":  {1, 1},
+	}
+
+	// Current ratio in float
+	currentRatio := float64(width) / float64(height)
+
+	// Step 3: Find closest match
+	closest := ""
+	minDiff := math.MaxFloat64
+	for name, ratio := range standardRatios {
+		ratioVal := float64(ratio[0]) / float64(ratio[1])
+		diff := math.Abs(currentRatio - ratioVal)
+		if diff < minDiff {
+			minDiff = diff
+			closest = name
+		}
+	}
+
+	// Step 4: If difference is small (e.g., less than 0.05), return the standard ratio
+	if minDiff < 0.05 {
+		return closest
+	}
+
+	// Otherwise return the exact simplified ratio
+	return fmt.Sprintf("%d:%d", simplifiedW, simplifiedH)
 }
