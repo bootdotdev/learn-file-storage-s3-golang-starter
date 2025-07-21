@@ -57,8 +57,6 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	fmt.Println("uploading video with id: ", videoID, "by user: ", userID)
-
 	file, handler, err := r.FormFile("video")
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't parse the video", err)
@@ -115,10 +113,24 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 
 	fileName := videoPrefix + getAssetPath(mimeType)
 
+	processPath, err := processVideoForFastStart(tmpFile.Name())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't fast process video", err)
+		return
+	}
+	defer os.Remove(processPath)
+
+	processedFile, err := os.Open(processPath)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't open process path", err)
+		return
+	}
+	defer processedFile.Close()
+
 	_, err = cfg.s3Client.PutObject(r.Context(), &s3.PutObjectInput{
 		Bucket:      aws.String(cfg.s3Bucket),
 		Key:         aws.String(fileName),
-		Body:        tmpFile,
+		Body:        processedFile,
 		ContentType: aws.String(mimeType),
 	})
 	if err != nil {
@@ -139,10 +151,8 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 
 type VideoStream struct {
 	Streams []struct {
-		Width              int    `json:"width,omitempty"`
-		Height             int    `json:"height,omitempty"`
-		SampleAspectRatio  string `json:"sample_aspect_ratio,omitempty"`
-		DisplayAspectRatio string `json:"display_aspect_ratio,omitempty"`
+		Width  int `json:"width,omitempty"`
+		Height int `json:"height,omitempty"`
 	} `json:"streams"`
 }
 
@@ -220,4 +230,29 @@ func getNearestAspectRatio(width, height int) string {
 
 	// Otherwise return the exact simplified ratio
 	return fmt.Sprintf("%d:%d", simplifiedW, simplifiedH)
+}
+
+// Fast process
+func processVideoForFastStart(filePath string) (string, error) {
+	outputFilePath := filePath + ".processing"
+	cmd := exec.Command("ffmpeg", "-i", filePath, "-c", "copy", "-movflags", "faststart", "-f", "mp4", outputFilePath)
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		return "", fmt.Errorf("ffmpeg error: %s, %v", stderr.String(), err)
+	}
+
+	fileInfo, err := os.Stat(outputFilePath)
+	if err != nil {
+		return "", fmt.Errorf("Couldn't start file: %v", err)
+	}
+	if fileInfo.Size() == 0 {
+		return "", fmt.Errorf("file is empty")
+	}
+
+	return outputFilePath, nil
+
 }
