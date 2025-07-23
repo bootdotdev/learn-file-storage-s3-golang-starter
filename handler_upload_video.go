@@ -141,19 +141,25 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, http.StatusInternalServerError, "Couldn't upload to S3", err)
 		return
 	}
-	videoURL := fmt.Sprintf("%s,%s", cfg.s3Bucket, fileName) //cfg.getObjectURL(fileName)
-	video.VideoURL = &videoURL
+
+	// videoURL := cfg.getObjectURL(fileName)
+	// videoURL := fmt.Sprintf("%s,%s", cfg.s3Bucket, fileName) //cfg.getObjectURL(fileName)
+	// video.VideoURL = &videoURL
+
+	cdnVideoURL := cfg.getCloudfrontURL(fileName)
+	video.VideoURL = &cdnVideoURL
+
 	err = cfg.db.UpdateVideo(video)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't update video", err)
 		return
 	}
 
-	video, err = cfg.dbVideoToSignedVideo(video)
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't get signed video from URL", err)
-		return
-	}
+	// video, err = cfg.dbVideoToSignedVideo(video)
+	// if err != nil {
+	// 	respondWithError(w, http.StatusInternalServerError, "Couldn't get signed video from URL", err)
+	// 	return
+	// }
 
 	respondWithJSON(w, http.StatusOK, video)
 

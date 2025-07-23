@@ -50,3 +50,7 @@ func (cfg apiConfig) getAssetURL(assetPath string) string {
 func (cfg apiConfig) getObjectURL(key string) string {
 	return fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", cfg.s3Bucket, cfg.s3Region, key)
 }
+
+func (cfg apiConfig) getCloudfrontURL(assetPath string) string {
+	return cfg.s3CfDistribution + "/" + assetPath
+}
