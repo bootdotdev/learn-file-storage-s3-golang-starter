@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/auth"
+	"github.com/xaitan80/learn-file-storage-s3-golang-starter/internal/auth"
 )
 
 func (cfg *apiConfig) handlerRefresh(w http.ResponseWriter, r *http.Request) {

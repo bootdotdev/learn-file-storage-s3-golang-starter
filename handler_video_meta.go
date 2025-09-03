@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/auth"
-	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/database"
 	"github.com/google/uuid"
+	"github.com/xaitan80/learn-file-storage-s3-golang-starter/internal/auth"
+	"github.com/xaitan80/learn-file-storage-s3-golang-starter/internal/database"
 )
 
 func (cfg *apiConfig) handlerVideoMetaCreate(w http.ResponseWriter, r *http.Request) {

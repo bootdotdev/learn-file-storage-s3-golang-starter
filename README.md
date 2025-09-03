@@ -34,7 +34,7 @@ brew update
 brew install sqlite3
 ```
 
-- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+- [AWS CLI](https://docs.aws.amazwiton.com/cli/latest/userguide/getting-started-install.html)
 
 ## 2. Download sample images and videos
 

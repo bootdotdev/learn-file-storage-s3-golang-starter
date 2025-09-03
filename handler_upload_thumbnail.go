@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/auth"
 	"github.com/google/uuid"
+	"github.com/xaitan80/learn-file-storage-s3-golang-starter/internal/auth"
 )
 
 func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +27,6 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		respondWithError(w, http.StatusUnauthorized, "Couldn't validate JWT", err)
 		return
 	}
-
 
 	fmt.Println("uploading thumbnail for video", videoID, "by user", userID)
 
