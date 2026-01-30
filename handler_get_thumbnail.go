@@ -2,10 +2,8 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 
-	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/auth"
 	"github.com/google/uuid"
 )
 
@@ -17,41 +15,6 @@ func (cfg *apiConfig) handlerThumbnailGet(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	const maxMemory = 10 << 20
-	r.ParseMultipartForm(maxMemory)
-
-	data, header, err := r.FormFile("thumbnail")
-	mediaType := header.Header.Get("Content-Type")
-	bytedata, errs := io.ReadAll(data)
-	videodeets, errz := cfg.db.GetVideo(videoID)
-	id := videodeets.UserID
-
-	token, err := auth.GetBearerToken(r.Header)
-	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, "token not found", err)
-		return
-	}
-	ids, errm := auth.ValidateJWT(token, cfg.jwtSecret)
-	if errm != nil {
-		respondWithError(w, http.StatusUnauthorized, "could not validate", errm)
-		return
-	}
-	if ids != id {
-		respondWithError(w, http.StatusUnauthorized, "could not validate", errm)
-		return
-
-	}
-	newthumnail := thumbnail{
-		data:      bytedata,
-		mediaType: mediaType,
-	}
-
-	videoThumbnails[videoID] = newthumnail
-	str := fmt.Sprintf("http://localhost:8091/api/thumbnails/%s", videoID)
-	videodeets.ThumbnailURL = &str
-	cfg.db.UpdateVideo(videodeets)
-
-	respondWithJSON(w, http.StatusAccepted, videodeets)
 	tn, ok := videoThumbnails[videoID]
 	if !ok {
 		respondWithError(w, http.StatusNotFound, "Thumbnail not found", nil)

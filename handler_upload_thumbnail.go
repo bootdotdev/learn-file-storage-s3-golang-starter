@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"io"
+
 	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/auth"
 	"github.com/google/uuid"
 )
@@ -28,10 +30,43 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-
 	fmt.Println("uploading thumbnail for video", videoID, "by user", userID)
+	const maxMemory = 10 << 20
+	r.ParseMultipartForm(maxMemory)
 
-	// TODO: implement the upload here
+	data, header, erro := r.FormFile("thumbnail")
+	if erro != nil {
+		respondWithError(w, http.StatusBadRequest, "couldnt form file", erro)
+		return
+	}
+	mediaType := header.Header.Get("Content-Type")
+	bytedata, errs := io.ReadAll(data)
+	if errs != nil {
+		respondWithError(w, http.StatusBadRequest, "couldnt read ma", errs)
+		return
+	}
+	videodeets, errz := cfg.db.GetVideo(videoID)
+	if errz != nil {
+		respondWithError(w, http.StatusBadRequest, "couldnt fetch frm db", errz)
+		return
+	}
+	id := videodeets.UserID
 
-	respondWithJSON(w, http.StatusOK, struct{}{})
+	if id != userID {
+		respondWithError(w, http.StatusUnauthorized, "could not validate", err)
+		return
+
+	}
+	newthumnail := thumbnail{
+		data:      bytedata,
+		mediaType: mediaType,
+	}
+
+	videoThumbnails[videoID] = newthumnail
+	str := fmt.Sprintf("http://localhost:8091/api/thumbnails/%s", videoID)
+	videodeets.ThumbnailURL = &str
+	cfg.db.UpdateVideo(videodeets)
+
+	respondWithJSON(w, http.StatusOK, videodeets)
+
 }
