@@ -262,6 +262,7 @@ function viewVideo(video) {
   } else {
     thumbnailImg.style.display = 'block';
     thumbnailImg.src = video.thumbnail_url;
+    // thumbnailImg.src = video.thumbnail_url + `?v=${Date.now()}`;
   }
 
   const videoPlayer = document.getElementById('video-player');

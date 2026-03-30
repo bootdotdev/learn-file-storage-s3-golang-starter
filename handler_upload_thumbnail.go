@@ -1,11 +1,13 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/auth"
 	"github.com/google/uuid"
@@ -51,14 +53,34 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 	defer fileData.Close()
 
 	mediaType := fileHeaders.Header.Get("Content-Type")
-	fileExtension := strings.Split(mediaType, "/")[1]
-	filePath := fmt.Sprintf("%v/%v.%v", cfg.assetsRoot, videoID, fileExtension)
+	temp, _, err := mime.ParseMediaType(mediaType)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Unable to parse media type", err)
+		return
+	}
+	
+	var fileExtension string
+	if temp == "image/png" {
+		fileExtension = "png"
+	} else if temp == "image/jpeg" {
+		fileExtension = "jpeg"
+	}
+
+	key := make([]byte, 32)
+	_, err = rand.Read(key)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "error creating random slice", err)
+		return
+	}
+
+	thumbnailID := base64.RawURLEncoding.EncodeToString(key)
 	
 	fmt.Printf("mediaType=%v\n", mediaType)
 	fmt.Printf("fileExtension=%v\n", fileExtension)
-	fmt.Printf("filePath=%v", filePath)
 
-	file, err := os.Create(filePath)
+	assetPath := fmt.Sprintf("%v.%v", thumbnailID, fileExtension)
+
+	file, err := os.Create(cfg.assetsRoot + "/" + assetPath)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "error creating file path", err)
 		return
@@ -83,7 +105,7 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	thumbnailURL := fmt.Sprintf("http://localhost:%v/assets/%v.%v", os.Getenv("PORT"), videoID, fileExtension)
+	thumbnailURL := fmt.Sprintf("http://localhost:%v/assets/%v", os.Getenv("PORT"), assetPath)
 	videoMetadata.ThumbnailURL = &thumbnailURL
 
 	err = cfg.db.UpdateVideo(videoMetadata)
