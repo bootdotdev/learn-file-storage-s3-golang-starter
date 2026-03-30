@@ -1,10 +1,11 @@
 package main
 
 import (
-	"io"
-	"os"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/auth"
 	"github.com/google/uuid"
@@ -31,7 +32,6 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-
 	fmt.Println("uploading thumbnail for video", videoID, "by user", userID)
 	// End provided code
 
@@ -51,17 +51,24 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 	defer fileData.Close()
 
 	mediaType := fileHeaders.Header.Get("Content-Type")
+	fileExtension := strings.Split(mediaType, "/")[1]
+	filePath := fmt.Sprintf("%v/%v.%v", cfg.assetsRoot, videoID, fileExtension)
+	
 	fmt.Printf("mediaType=%v\n", mediaType)
+	fmt.Printf("fileExtension=%v\n", fileExtension)
+	fmt.Printf("filePath=%v", filePath)
 
-	// Log file details (filename, size, MIME header)
-	// log.Printf("Uploaded File: %+v\n", header.Filename)
-	// log.Printf("File Size: %+v\n", header.Size)
-	// log.Printf("MIME Header: %+v\n", header.Header)
-
-	// Read the image data into a byte slice
-	fileBytes, err := io.ReadAll(fileData)
+	file, err := os.Create(filePath)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "error reading file data", err)
+		respondWithError(w, http.StatusInternalServerError, "error creating file path", err)
+		return
+	}
+
+	defer file.Close()
+
+	_, err = io.Copy(file, fileData)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "error copying/writing file data to disk", err)
 		return
 	}
 
@@ -76,15 +83,7 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	newThumbnail := thumbnail{
-		data: fileBytes,
-		mediaType: mediaType,
-	}
-
-	videoThumbnails[videoID] = newThumbnail
-
-	// Update the video metadata so that it has a new thumbnail URL
-	thumbnailURL := fmt.Sprintf("http://localhost:%v/api/thumbnails/%v", os.Getenv("PORT"), videoID) 
+	thumbnailURL := fmt.Sprintf("http://localhost:%v/assets/%v.%v", os.Getenv("PORT"), videoID, fileExtension)
 	videoMetadata.ThumbnailURL = &thumbnailURL
 
 	err = cfg.db.UpdateVideo(videoMetadata)
