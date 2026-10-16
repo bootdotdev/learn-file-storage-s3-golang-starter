@@ -8,7 +8,7 @@ This repo contains the starter code for the Tubely application - the #1 tool for
 
 ## 1. Install dependencies
 
-- [Go](https://golang.org/doc/install)
+- [Go 1.27.2+](https://go.dev/doc/install)
 - `go mod download` to download all dependencies
 - [FFMPEG](https://ffmpeg.org/download.html) - both `ffmpeg` and `ffprobe` are required to be in your `PATH`.
 
