@@ -129,7 +129,8 @@ func (c Client) UpdateVideo(video Video) error {
 		description = ?,
 		thumbnail_url = ?,
 		video_url = ?,
-		user_id = ?
+		user_id = ?,
+		updated_at = CURRENT_TIMESTAMP
 	WHERE id = ?
 	`
 
